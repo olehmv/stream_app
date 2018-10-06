@@ -1,95 +1,81 @@
 package app.stream
-import org.apache.spark.sql.{ DataFrame, SparkSession }
-import org.apache.spark.sql.functions.{ month, _ }
-import org.apache.spark.sql.streaming.OutputMode
-import scalafx.application.JFXApp
-import app.utils._
+import app.utils.Utils._
+import app.utils.xml.Sink
+import org.apache.spark.sql._
+
+import scala.xml.XML
 
 object Stream {
 
   def main(args: Array[String]): Unit = {
-    if (args.length < 2) {
-      println("Usage : provide readStreamPath and writeStreamPath arguments")
+
+    if (args.length < 1) {
+      println("Usage : provide parameters.xml file")
     }
-    // read and write path
-    val readStreamPath  = args(0)
-    val writeStreamPath = args(1)
 
-    // timestamp patterns
-    val fromPattern1 = "MM/dd/yyyy"
-    val toPattern1   = "yyyy-MM-dd"
+    val file = args(0)
 
-    val fromPattern2 = "MM/dd/yyyy hh:mm:ss aa"
-    val toPattern2   = "MM/dd/yyyy hh:mm:ss aa"
+    val fileElem = XML.loadFile(file)
+
+    val parameters = app.utils.xml.Parameter.fromXML(fileElem)
+
+    val sink = parameters.sink
+
+    val source = parameters.source
+
+    val tranformColumns = parameters.transform
 
     val spark = SparkSession.builder
       .master("local[*]")
       .appName("stream_app")
       .getOrCreate()
+    // set log level
     spark.sparkContext.setLogLevel("ERROR")
+    // set kryo serializer
     spark.sparkContext.getConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     import spark.implicits._
 
+    val map = source.options.map(option => (option.key, option.value)).toMap
+
     val dataFrame = spark.read
-      .format("csv")
-      .option("header", "true")
-      .load(readStreamPath)
+      .format(source.format)
+      .options(source.options.map(option => (option.key, option.value)).toMap)
+      .load(source.path)
 
     val schema = dataFrame.schema
 
-    val dataFrameS =
+    var dataFrameS =
       spark.readStream
         .schema(schema)
-        .format("csv")
-        .option("header", "true")
-        .load(readStreamPath)
+        .format(source.format)
+        .options(source.options.map(option => (option.key, option.value)).toMap)
+        .load(source.path)
 
-    import app.utils._
-    // transform string columns with patter "MM/dd/yyyy"  to timestamp
-    var columnsToTransform          = Set(("Call Date", "CallDateTs"), ("Watch Date", "WatchDateTs"))
-    var patternForColumnsToTranform = "MM/dd/yyyy"
-    var dataFrameSTs = trnsformStringColumnsToTimestampColumns(dataFrameS,
-                                                               columnsToTransform,
-                                                               patternForColumnsToTranform)
-    //transform string columns with pattern "MM/dd/yyyy hh:mm:ss aa" to timestamp
-    columnsToTransform = Set(
-      ("Entry DtTm", "EntryDtTs"),
-      ("Received DtTm", "ReceivedDtTs"),
-      ("Dispatch DtTm", "DispatchDtTs"),
-      ("Response DtTm", "ResponseDtTs"),
-      ("On Scene DtTm", "OnSceneDtTs"),
-      ("Transport DtTm", "TransportDtTs"),
-      ("Hospital DtTm", "HospitalDtTs"),
-      ("Available DtTm", "AvailableDtTs")
+    tranformColumns.foreach(
+      transform => {
+        val pattern = transform.pattern
+        val columns = transform.columns
+        transformStringColumnsToTimestampColumns(dataFrameS, columns, pattern)
+      }
     )
-    patternForColumnsToTranform = "MM/dd/yyyy hh:mm:ss aa"
-    dataFrameSTs = trnsformStringColumnsToTimestampColumns(
-      dataFrameSTs,
-      columnsToTransform,
-      patternForColumnsToTranform
-    )
-    val winCount = dataFrameSTs
-      .groupBy(
-        month($"CallDateTs") as "month"
-      )
-      .count()
 
-    val query = winCount.writeStream
-      .format("console")
-      .outputMode(OutputMode.Update())
-      .start()
+    dataFrameS = truncateSpaceInStringColumns(dataFrameS)
 
-    dataFrameSTs.select(month($"CallDateTs"))
+    // register temp view for query
+    dataFrameS.createOrReplaceTempView(parameters.sqlFileLocation.tableName)
 
-    val query1 = winCount.writeStream
-      .format("parquet")
-      .option("path", writeStreamPath)
-      .outputMode(OutputMode.Complete())
-      .start()
+    // load sql file
+    val sql: Array[String] = spark.sparkContext.textFile(parameters.sqlFileLocation.url).collect()
 
-    new JfxApp().pieChart(
-      spark.read.parquet(writeStreamPath).groupBy($"mounth").agg(sum($"count"))
-    )
+    sql.foreach(query => dataFrameS = spark.sql(query))
+
+    val query =
+      dataFrameS.writeStream
+        .format(sink.format)
+        .options(sink.options.map(option => (option.key, option.value)).toMap)
+        .outputMode(sink.outputMode)
+        .start()
+
     query.awaitTermination()
 
   }

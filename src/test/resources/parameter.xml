@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<parameter>
+    <source format="csv" path="D:\csv_files">
+      <option key="header" value="true"/><option key="inferSchema" value="true"/>
+    </source><sink format="parquet" outputMode="append">
+      <option key="path" value="D:\parquet_files"/><option key="checkpointLocation" value="src\main\resources\checkpoint"/>
+    </sink><transform pattern="MM/dd/yyyy">
+      <column from="Call Date" to="CallDateTs"/><column from="Watch Date" to="WatchDateTs"/>
+    </transform><transform pattern="MM/dd/yyyy hh:mm:ss aa">
+      <column from="Entry DtTm" to="EntryDtTs"/><column from="Received DtTm" to="ReceivedDtTs"/><column from="Entry DtTm" to="EntryDtTs"/><column from="Received DtTm" to="ReceivedDtTs"/><column from="Dispatch DtTm" to="DispatchDtTs"/><column from="Response DtTm" to="ResponseDtTs"/><column from="On Scene DtTm" to="OnSceneDtTs"/><column from="Transport DtTm" to="TransportDtTs"/><column from="Hospital DtTm" to="HospitalDtTs"/><column from="Available DtTm" to="AvailableDtTs"/>
+    </transform><sqlfilelocation url="src\test\resources\transformation.sql" tableName="data"/>
+    </parameter>

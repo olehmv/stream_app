@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<sink format="resources\csv" path="D:\csv_files">
+      <option key="header" value="true"/><option key="inferSchema" value="true"/>
+    </sink>
