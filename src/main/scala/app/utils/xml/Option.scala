@@ -14,7 +14,8 @@ class Option(_key: String, _value: String) {
   def key_   = _key
   def value_ = _value
 
-  def toXML = <option key={_key} value={_value}/>
+  def toXML =
+      <option key={_key} value={_value}/>
 
 }
 

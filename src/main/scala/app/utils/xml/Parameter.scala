@@ -28,7 +28,10 @@ class Parameter(_source: Source,
 
   def toXML =
     <parameter>
-    {source.toXML}{sink.toXML}{for(elem<-_transform)yield elem.toXML}{sqlFileLocation.toXML}
+      {source.toXML}
+      {sink.toXML}
+      {for(elem<-_transform)yield elem.toXML}
+      {sqlFileLocation.toXML}
     </parameter>
 
 }

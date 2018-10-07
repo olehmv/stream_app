@@ -55,7 +55,7 @@ object Stream {
       transform => {
         val pattern = transform.pattern
         val columns = transform.columns
-        transformStringColumnsToTimestampColumns(dataFrameS, columns, pattern)
+        dataFrameS=transformStringColumnsToTimestampColumns(dataFrameS, columns, pattern)
       }
     )
 

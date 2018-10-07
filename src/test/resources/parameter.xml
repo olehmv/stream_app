@@ -1,12 +1,27 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <parameter>
-    <source format="csv" path="D:\csv_files">
-      <option key="header" value="true"/><option key="inferSchema" value="true"/>
-    </source><sink format="parquet" outputMode="append">
-      <option key="path" value="D:\parquet_files"/><option key="checkpointLocation" value="src\main\resources\checkpoint"/>
-    </sink><transform pattern="MM/dd/yyyy">
-      <column from="Call Date" to="CallDateTs"/><column from="Watch Date" to="WatchDateTs"/>
-    </transform><transform pattern="MM/dd/yyyy hh:mm:ss aa">
-      <column from="Entry DtTm" to="EntryDtTs"/><column from="Received DtTm" to="ReceivedDtTs"/><column from="Entry DtTm" to="EntryDtTs"/><column from="Received DtTm" to="ReceivedDtTs"/><column from="Dispatch DtTm" to="DispatchDtTs"/><column from="Response DtTm" to="ResponseDtTs"/><column from="On Scene DtTm" to="OnSceneDtTs"/><column from="Transport DtTm" to="TransportDtTs"/><column from="Hospital DtTm" to="HospitalDtTs"/><column from="Available DtTm" to="AvailableDtTs"/>
-    </transform><sqlfilelocation url="src\test\resources\transformation.sql" tableName="data"/>
-    </parameter>
+  <source path="D:\csv_files" format="csv">
+    <option value="true" key="header"/>
+    <option value="true" key="inferSchema"/>
+  </source>
+  <sink outputMode="append" format="parquet">
+    <option value="D:\parquet_files" key="path"/>
+    <option value="src\test\resources\checkpoint" key="checkpointLocation"/>
+  </sink>
+  <transform pattern="MM/dd/yyyy">
+    <column to="CallDateTs" from="Call Date"/>
+    <column to="WatchDateTs" from="Watch Date"/>
+  </transform>
+  <transform pattern="MM/dd/yyyy hh:mm:ss aa">
+    <column to="EntryDtTs" from="Entry DtTm"/>
+    <column to="ReceivedDtTs" from="Received DtTm"/>
+    <column to="DispatchDtTs" from="Dispatch DtTm"/>
+    <column to="ResponseDtTs" from="Response DtTm"/>
+    <column to="OnSceneDtTs" from="On Scene DtTm"/>
+    <column to="TransportDtTs" from="Transport DtTm"/>
+    <column to="HospitalDtTs" from="Hospital DtTm"/>
+    <column to="AvailableDtTs" from="Available DtTm"/>
+  </transform>
+  <sqlfilelocation tableName="fire_calls" url="src\test\resources\transformation.sql">
+</sqlfilelocation>
+</parameter>
