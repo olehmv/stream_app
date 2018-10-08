@@ -2,6 +2,7 @@ package app.stream
 import app.utils.Utils._
 import app.utils.xml.Sink
 import org.apache.spark.sql._
+import org.apache.spark.sql.streaming.StreamingQuery
 
 import scala.xml.XML
 
@@ -19,7 +20,7 @@ object Stream {
 
     val parameters = app.utils.xml.Parameter.fromXML(fileElem)
 
-    val sink = parameters.sink
+    val sinks: List[Sink] = parameters.sink
 
     val source = parameters.source
 
@@ -55,28 +56,34 @@ object Stream {
       transform => {
         val pattern = transform.pattern
         val columns = transform.columns
-        dataFrameS=transformStringColumnsToTimestampColumns(dataFrameS, columns, pattern)
+        dataFrameS = transformStringColumnsToTimestampColumns(dataFrameS, columns, pattern)
       }
     )
 
     dataFrameS = truncateSpaceInStringColumns(dataFrameS)
 
-    // register temp view for query
-    dataFrameS.createOrReplaceTempView(parameters.sqlFileLocation.tableName)
+    dataFrameS.createOrReplaceTempView(source.sourceTable)
 
-    // load sql file
-    val sql: Array[String] = spark.sparkContext.textFile(parameters.sqlFileLocation.url).collect()
+    // map sinks with sql query
+    val sinksQuery: List[(Sink, String)] = sinks.map(
+      sink => (sink, spark.sparkContext.textFile(sink.executeQuery.sql).collect().mkString("\n"))
+    )
 
-    sql.foreach(query => dataFrameS = spark.sql(query))
+    // map sinks with DataFrame result
+    val sinksDataFrame: List[(Sink, DataFrame)] =
+      sinksQuery.map(sink => (sink._1, spark.sql(sink._2)))
 
-    val query =
-      dataFrameS.writeStream
-        .format(sink.format)
-        .options(sink.options.map(option => (option.key, option.value)).toMap)
-        .outputMode(sink.outputMode)
-        .start()
+    // write DataFrames to stream sinks
+    val streams: List[StreamingQuery] = sinksDataFrame.map(
+      sink =>
+        sink._2.writeStream
+          .format(sink._1.format)
+          .options(sink._1.options.map(option => (option.key, option.value)).toMap)
+          .outputMode(sink._1.outputMode)
+          .start()
+    )
 
-    query.awaitTermination()
+    streams.foreach(stream => stream.awaitTermination())
 
   }
 

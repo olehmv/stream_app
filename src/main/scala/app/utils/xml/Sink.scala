@@ -9,19 +9,26 @@ import scala.xml.NodeSeq
   * @param _outputMode
   * @param _options
   */
-class Sink(_format: String, _outputMode: String, _options: List[Option]) {
+class Sink(_format: String,
+           _outputMode: String,
+           _options: List[Option],
+           _executeQuery: ExecuteQuery) {
 
-  def format     = _format
-  def outputMode = _outputMode
-  def options    = _options
+  def format       = _format
+  def outputMode   = _outputMode
+  def options      = _options
+  def executeQuery = _executeQuery
 
-  def format_     = _format
-  def outputMode_ = _outputMode
-  def options_    = _options
+  def format_       = _format
+  def outputMode_   = _outputMode
+  def options_      = _options
+  def executeQuery_ = _executeQuery
 
   def toXML =
     <sink format={_format} outputMode ={_outputMode}>
-      { for (option <- _options) yield  option.toXML }
+      { _executeQuery.toXML}
+      { for (elam <- _options) yield  elam.toXML }
+
     </sink>
 
 }
@@ -32,7 +39,8 @@ object Sink {
     new Sink(
       _format = (node \ "@format") text,
       _outputMode = (node \ "@outputMode") text,
-      _options = for (sink <- (node \ "option") toList) yield Option.fromXML(sink)
+      _options = for (elem <- (node \ "option") toList) yield Option.fromXML(elem),
+      _executeQuery = ExecuteQuery.fromXML((node \ "executequery"))
     )
 
 }

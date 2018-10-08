@@ -9,18 +9,20 @@ import scala.xml.NodeSeq
   * @param _path
   * @param _options
   */
-class Source(_format: String, _path: String, _options: List[Option]) {
+class Source(_format: String, _path: String, _options: List[Option], _sourceTable: String) {
 
-  def format  = _format
-  def path    = _path
-  def options = _options
+  def format      = _format
+  def path        = _path
+  def options     = _options
+  def sourceTable = _sourceTable
 
-  def format_  = _format
-  def path_    = _path
-  def options_ = _options
+  def format_      = _format
+  def path_        = _path
+  def options_     = _options
+  def sourceTable_ = _sourceTable
 
   def toXML =
-    <source format={_format} path ={_path}>
+    <source format={_format} path ={_path} sourcetable={_sourceTable}>
       { for (option <- _options) yield  option.toXML }
     </source>
 
@@ -32,7 +34,8 @@ object Source {
     new Source(
       _format = (node \ "@format") text,
       _path = (node \ "@path") text,
-      _options = for (source <- (node \ "option") toList) yield Option.fromXML(source)
+      _options = for (source <- (node \ "option") toList) yield Option.fromXML(source),
+      _sourceTable = (node \ "@sourcetable") text
     )
 
 }

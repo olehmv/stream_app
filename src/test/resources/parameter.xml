@@ -1,13 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <parameter>
-  <source path="D:\csv_files" format="csv">
+  <source sourcetable="fire_calls" path="D:\csv_files" format="csv">
     <option value="true" key="header"/>
     <option value="true" key="inferSchema"/>
   </source>
-  <sink outputMode="append" format="parquet">
-    <option value="D:\parquet_files" key="path"/>
-    <option value="src\test\resources\checkpoint" key="checkpointLocation"/>
-  </sink>
   <transform pattern="MM/dd/yyyy">
     <column to="CallDateTs" from="Call Date"/>
     <column to="WatchDateTs" from="Watch Date"/>
@@ -22,6 +18,19 @@
     <column to="HospitalDtTs" from="Hospital DtTm"/>
     <column to="AvailableDtTs" from="Available DtTm"/>
   </transform>
-  <sqlfilelocation tableName="fire_calls" url="src\test\resources\transformation.sql">
-</sqlfilelocation>
+  <sink outputMode="append" format="parquet">
+    <executequery sqlfile="D:\stream_app\src\test\resources\sql\query\streamoperation\count_calls_per_month.sql"/>
+    <option value="D:\parquet_files\count_calls_per_month" key="path"/>
+    <option value="src\test\resources\checkpoint" key="checkpointLocation"/>
+  </sink>
+  <sink outputMode="append" format="parquet">
+    <executequery sqlfile="D:\stream_app\src\test\resources\sql\query\streamoperation\count_number_of_calls_per_day_of_week.sql"/>
+    <option value="D:\parquet_files\count_number_of_calls_per_day_of_month" key="path"/>
+    <option value="src\test\resources\checkpoint" key="checkpointLocation"/>
+  </sink>
+  <sink outputMode="append" format="parquet">
+    <executequery sqlfile="D:\stream_app\src\test\resources\sql\query\streamoperation\count_number_of_calls_per_day_of_month.sql"/>
+    <option value="D:\parquet_files\count_number_of_calls_per_day_of_week" key="path"/>
+    <option value="src\test\resources\checkpoint" key="checkpointLocation"/>
+  </sink>
 </parameter>
