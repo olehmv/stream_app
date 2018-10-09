@@ -12,7 +12,7 @@ import scala.xml.NodeSeq
   * @param _sinks
   * @param _transformColumns
   */
-class Parameter(_source: Source, _sinks: List[Sink], _transformColumns: List[TransformColumns]) {
+class Parameter(_source: Source, _sinks: List[Sink], _transformColumns: List[TransformColumnName]) {
   def source    = _source
   def sink      = _sinks
   def transform = _transformColumns
@@ -36,8 +36,8 @@ object Parameter {
     new Parameter(
       _source = Source.fromXML(node \ "source"),
       _sinks = for (elem            <- (node \ "sink") toList) yield Sink.fromXML(elem),
-      _transformColumns = for (elem <- (node \ "transform").toList)
-        yield TransformColumns.fromXML(elem)
+      _transformColumns = for (elem <- (node \ "transformcolumnname").toList)
+        yield TransformColumnName.fromXML(elem)
     )
 
 }

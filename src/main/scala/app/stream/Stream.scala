@@ -2,7 +2,7 @@ package app.stream
 import app.utils.Utils._
 import app.utils.xml.Sink
 import org.apache.spark.sql._
-import org.apache.spark.sql.streaming.StreamingQuery
+import org.apache.spark.sql.streaming.{ DataStreamWriter, StreamingQuery }
 
 import scala.xml.XML
 
@@ -10,41 +10,54 @@ object Stream {
 
   def main(args: Array[String]): Unit = {
 
+    // check for param file
     if (args.length < 1) {
       println("Usage : provide parameters.xml file")
     }
 
-    val file = args(0)
+    // parameters.xml file
+    val paramFile = args(0)
 
-    val fileElem = XML.loadFile(file)
+    // load parameters.xml scala xml Elem object
+    val elam = XML.loadFile(paramFile)
 
-    val parameters = app.utils.xml.Parameter.fromXML(fileElem)
+    // convert xml Elem object to app.utils.xml.Parameter
+    val parameter = app.utils.xml.Parameter.fromXML(elam)
 
-    val sinks: List[Sink] = parameters.sink
+    // sinks to write
+    val sinks: List[Sink] = parameter.sink
 
-    val source = parameters.source
+    // source to read
+    val source = parameter.source
 
-    val tranformColumns = parameters.transform
+    // name of table to query
+    val sourceTable = source.sourceTable
 
+    // columns to transform
+    val transformColumns = parameter.transform
+
+    // create spark session
     val spark = SparkSession.builder
       .master("local[*]")
       .appName("stream_app")
       .getOrCreate()
+
     // set log level
     spark.sparkContext.setLogLevel("ERROR")
+
     // set kryo serializer
     spark.sparkContext.getConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    import spark.implicits._
 
-    val map = source.options.map(option => (option.key, option.value)).toMap
-
+    // read file to infer schema
     val dataFrame = spark.read
       .format(source.format)
       .options(source.options.map(option => (option.key, option.value)).toMap)
       .load(source.path)
 
+    // schema for stream
     val schema = dataFrame.schema
 
+    // read stream
     var dataFrameS =
       spark.readStream
         .schema(schema)
@@ -52,7 +65,8 @@ object Stream {
         .options(source.options.map(option => (option.key, option.value)).toMap)
         .load(source.path)
 
-    tranformColumns.foreach(
+    // transform column names from string to timestamp
+    transformColumns.foreach(
       transform => {
         val pattern = transform.pattern
         val columns = transform.columns
@@ -60,9 +74,14 @@ object Stream {
       }
     )
 
+    // trunc spaces in columns names
     dataFrameS = truncateSpaceInStringColumns(dataFrameS)
 
-    dataFrameS.createOrReplaceTempView(source.sourceTable)
+    // set water mark on stream from source
+    dataFrameS = dataFrameS.withWatermark(source.waterMark.columnName, source.waterMark.timeInterval)
+
+    // register temp view for sql files
+    dataFrameS.createOrReplaceTempView(sourceTable)
 
     // map sinks with sql query
     val sinksQuery: List[(Sink, String)] = sinks.map(
@@ -71,19 +90,35 @@ object Stream {
 
     // map sinks with DataFrame result
     val sinksDataFrame: List[(Sink, DataFrame)] =
-      sinksQuery.map(sink => (sink._1, spark.sql(sink._2)))
+      sinksQuery.map(
+        sink =>
+          (sink._1,
+           spark
+             .sql(sink._2))
+      )
 
     // write DataFrames to stream sinks
-    val streams: List[StreamingQuery] = sinksDataFrame.map(
+    val streams: List[DataStreamWriter[Row]] = sinksDataFrame.map(
       sink =>
         sink._2.writeStream
           .format(sink._1.format)
+          .option(sink._1.executeQuery.checkPoint.key, sink._1.executeQuery.checkPoint.value)
           .options(sink._1.options.map(option => (option.key, option.value)).toMap)
           .outputMode(sink._1.outputMode)
-          .start()
     )
 
-    streams.foreach(stream => stream.awaitTermination())
+    // create new Runnable for sink
+    def newRunnable(dataWriter: DataStreamWriter[Row]) = {
+      val runnable = new Runnable {
+        override def run { dataWriter.start().awaitTermination() }
+      }
+      runnable
+    }
+
+    // start stream data to sink
+    streams.foreach(
+      stream => new Thread(newRunnable(stream)).start()
+    )
 
   }
 

@@ -1,14 +1,15 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <parameter>
-  <source sourcetable="fire_calls" path="D:\csv_files" format="csv">
+  <source sourcetable="fire_calls" path="src/test/resources" format="csv">
+    <watermark timeInterval="1 day" columnname="CallDateTs"/>
     <option value="true" key="header"/>
     <option value="true" key="inferSchema"/>
   </source>
-  <transform pattern="MM/dd/yyyy">
+  <transformcolumnname pattern="MM/dd/yyyy">
     <column to="CallDateTs" from="Call Date"/>
     <column to="WatchDateTs" from="Watch Date"/>
-  </transform>
-  <transform pattern="MM/dd/yyyy hh:mm:ss aa">
+  </transformcolumnname>
+  <transformcolumnname pattern="MM/dd/yyyy hh:mm:ss aa">
     <column to="EntryDtTs" from="Entry DtTm"/>
     <column to="ReceivedDtTs" from="Received DtTm"/>
     <column to="DispatchDtTs" from="Dispatch DtTm"/>
@@ -17,20 +18,23 @@
     <column to="TransportDtTs" from="Transport DtTm"/>
     <column to="HospitalDtTs" from="Hospital DtTm"/>
     <column to="AvailableDtTs" from="Available DtTm"/>
-  </transform>
+  </transformcolumnname>
   <sink outputMode="append" format="parquet">
-    <executequery sqlfile="D:\stream_app\src\test\resources\sql\query\streamoperation\count_calls_per_month.sql"/>
-    <option value="D:\parquet_files\count_calls_per_month" key="path"/>
-    <option value="src\test\resources\checkpoint" key="checkpointLocation"/>
+    <executequery sqlfile="src/test/resources/sql/streamoperation/group_by_day_stream.sql">
+      <checkpoint value="src/test/resources/checkpoint_sink1" key="checkpointLocation"/>
+    </executequery>
+    <option value="src/test/resources/sink/group_by_day_stream" key="path"/>
   </sink>
   <sink outputMode="append" format="parquet">
-    <executequery sqlfile="D:\stream_app\src\test\resources\sql\query\streamoperation\count_number_of_calls_per_day_of_week.sql"/>
-    <option value="D:\parquet_files\count_number_of_calls_per_day_of_month" key="path"/>
-    <option value="src\test\resources\checkpoint" key="checkpointLocation"/>
+    <executequery sqlfile="src/test/resources/sql/streamoperation/group_by_month_stream.sql">
+      <checkpoint value="src/test/resources/checkpoint_sink2" key="checkpointLocation"/>
+    </executequery>
+    <option value="src/test/resources/sink/group_by_month_stream" key="path"/>
   </sink>
   <sink outputMode="append" format="parquet">
-    <executequery sqlfile="D:\stream_app\src\test\resources\sql\query\streamoperation\count_number_of_calls_per_day_of_month.sql"/>
-    <option value="D:\parquet_files\count_number_of_calls_per_day_of_week" key="path"/>
-    <option value="src\test\resources\checkpoint" key="checkpointLocation"/>
+    <executequery sqlfile="src/test/resources/sql/streamoperation/group_by_year_stream.sql">
+      <checkpoint value="src/test/resources/checkpoint_sink3" key="checkpointLocation"/>
+    </executequery>
+    <option value="src/test/resources//sink/group_by_year_stream" key="path"/>
   </sink>
 </parameter>

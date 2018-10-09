@@ -2,28 +2,27 @@ package app.utils.xml
 
 import scala.xml.NodeSeq
 
-class ExecuteQuery(_sqlFile: String, _waterMark: (String, String)) {
+class ExecuteQuery(_sqlFile: String, _checkPoint: CheckPoint) {
 
-  def sql       = _sqlFile
-  def waterMark = _waterMark
+  def sql        = _sqlFile
+  def checkPoint = _checkPoint
 
-  def sql_       = _sqlFile
-  def waterMark_ = _waterMark
+  def sql_        = _sqlFile
+  def checkPoint_ = _checkPoint
 
   def toXML =
-    <executequery sqlfile={_sqlFile} watermark={_waterMark}/>
+    <executequery sqlfile={_sqlFile}>
+      {_checkPoint.toXML}
+    </executequery>
 
 }
 
 object ExecuteQuery {
 
-  def fromXML(node: NodeSeq) = {
-
-    val seq: NodeSeq = node \ "@watermark"
+  def fromXML(node: NodeSeq) =
     new ExecuteQuery(
       _sqlFile = (node \ "@sqlfile") text,
-      _waterMark = ???
+      _checkPoint = CheckPoint.fromXML((node \ "checkpoint"))
     )
-  }
 
 }

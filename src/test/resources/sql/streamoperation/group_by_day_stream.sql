@@ -1,0 +1,1 @@
+select *, date_format(CallDateTs,"EEEE") as day from fire_calls

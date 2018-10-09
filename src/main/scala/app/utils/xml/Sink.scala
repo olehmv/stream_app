@@ -9,10 +9,7 @@ import scala.xml.NodeSeq
   * @param _outputMode
   * @param _options
   */
-class Sink(_format: String,
-           _outputMode: String,
-           _options: List[Option],
-           _executeQuery: ExecuteQuery) {
+class Sink(_format: String, _outputMode: String, _options: List[Option], _executeQuery: ExecuteQuery) {
 
   def format       = _format
   def outputMode   = _outputMode
@@ -26,9 +23,9 @@ class Sink(_format: String,
 
   def toXML =
     <sink format={_format} outputMode ={_outputMode}>
-      { _executeQuery.toXML}
+      {_executeQuery.toXML}
       { for (elam <- _options) yield  elam.toXML }
-
+     
     </sink>
 
 }

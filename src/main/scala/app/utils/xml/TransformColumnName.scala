@@ -8,7 +8,7 @@ import scala.xml.NodeSeq
   * @param _pattern
   * @param _columns
   */
-class TransformColumns(_pattern: String, _columns: List[Column]) {
+class TransformColumnName(_pattern: String, _columns: List[Column]) {
 
   def pattern = _pattern
   def columns = _columns
@@ -17,16 +17,16 @@ class TransformColumns(_pattern: String, _columns: List[Column]) {
   def columns_ = _columns
 
   def toXML =
-    <transform pattern={_pattern}>
+    <transformcolumnname pattern={_pattern}>
       {for(column <- _columns) yield column.toXML}
-    </transform>
+    </transformcolumnname>
 
 }
 
-object TransformColumns {
+object TransformColumnName {
 
   def fromXML(node: NodeSeq) =
-    new TransformColumns(
+    new TransformColumnName(
       _pattern = (node \ "@pattern") text,
       _columns = for (column <- (node \ "column") toList) yield Column.fromXML(column)
     )
