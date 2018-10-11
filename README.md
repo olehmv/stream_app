@@ -3,25 +3,26 @@ This app use apache spark structured streaming to stream data from source to sin
    Usage : 
     
    Parameterize parameter.xml  
-         
-   <parameter>
-     <source sourcetable="name of table you will use in sql files query" path="from where to read" format="format of source">
-       <watermark timeInterval="how long wait for late data" columnname="source column name to check for delay, must be timestamp"/>
-       <option value="value to apply for source" key="config spark key"/>
-     </source>
-     <transformcolumnname pattern="what time stamp pattern to follow when parse this column">
-       <column to="to new column name" from="from old column name"/>
-     </transformcolumnname>
-     <sink outputMode="how to output to sink (append, complete, update)" format="format of sink">
-       <executequery sqlfile="location of sql file, where query use table name from sourcetable attribute in source xml elem">
-         <checkpoint value="checkpoin location required for this query" key="config spark key"/>
-       </executequery>
-      <option value="value to apply for sink" key="config spark key"/>
-     </sink>
-   </parameter>
-   
+
+    <parameter>
+      <source sourcetable="name of table you will use in sql files query" path="from where to read" format="format of source">
+        <watermark timeInterval="how long wait for late data" columnname="source column name to check for delay, must be timestamp"/>
+        <option value="value to apply for source" key="config spark key"/>
+      </source>
+      <transformcolumnname pattern="what time stamp pattern to follow when parse this column">
+        <column to="to new column name" from="from old column name"/>
+      </transformcolumnname>
+      <sink outputMode="how to output to sink (append, complete, update)" format="format of sink">
+        <executequery sqlfile="location of sql file, where query use table name from sourcetable attribute in source xml elem">
+          <checkpoint value="checkpoin location required for this query" key="config spark key"/>
+        </executequery>
+       <option value="value to apply for sink" key="config spark key"/>
+      </sink>
+    </parameter>
+
    Example from test/resources/parameter.xml:
-    <?xml version='1.0' encoding='UTF-8'?>
+   
+
     <parameter>
       <source sourcetable="fire_calls" path="src/test/resources/source" format="csv">
         <watermark timeInterval="1 day" columnname="CallDateTs"/>
