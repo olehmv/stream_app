@@ -1,8 +1,13 @@
 target
 checkpoint
+checkpoint_sink1
+checkpoint_sink2
+checkpoint_sink3
+sink
 *.class
 *.iml
 *.ipr
 *.iws
 .idea
 out
+checkpoint_sink1

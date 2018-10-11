@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <parameter>
-  <source sourcetable="fire_calls" path="src/test/resources" format="csv">
+  <source sourcetable="fire_calls" path="src/test/resources/source" format="csv">
     <watermark timeInterval="1 day" columnname="CallDateTs"/>
     <option value="true" key="header"/>
     <option value="true" key="inferSchema"/>

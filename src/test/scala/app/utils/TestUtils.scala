@@ -43,7 +43,7 @@ class TestUtils extends FlatSpec with SparkSessionTestWrapper {
     val sourceOption1 = new Option("header", "true")
     val sourceOption2 = new Option("inferSchema", "true")
     val waterMark     = new WaterMark("CallDateTs", "1 day")
-    val source        = new Source("csv", "src/test/resources", List(sourceOption1, sourceOption2), "fire_calls", waterMark)
+    val source        = new Source("csv", "src/test/resources/source", List(sourceOption1, sourceOption2), "fire_calls", waterMark)
 
     val sink1Option = new Option("path", "src/test/resources/sink/group_by_day_stream")
     val sink2Option = new Option("path", "src/test/resources/sink/group_by_month_stream")
