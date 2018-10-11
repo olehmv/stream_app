@@ -2,7 +2,7 @@ This app use apache spark structured streaming to stream data from source to sin
    
    Usage : 
     
-   Parameterize parameter.xml  
+   Parameterize and pass to program arguments parameter.xml  
 
     <parameter>
       <source sourcetable="name of table you will use in sql files query" path="from where to read" format="format of source">
